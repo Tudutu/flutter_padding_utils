@@ -1,8 +1,8 @@
 name: flutter_padding_utils
-description: A new Flutter package project.
-version: 0.0.1
-author:
-homepage:
+description: Utility functions for padding, such as collapsible padding.
+version: 1.0.0
+author: Tudutu Ltd, UK.
+homepage: https://github.com/Tudutu/flutter_padding_utils
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
