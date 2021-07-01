@@ -1,11 +1,12 @@
 name: flutter_padding_utils
 description: Utility functions for padding, such as collapsible padding.
+publish_to: none
 version: 1.0.0
 author: Tudutu Ltd, UK.
 homepage: https://github.com/Tudutu/flutter_padding_utils
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.13.0 <3.0.0"
   flutter: ">=1.17.0"
 
 dependencies:

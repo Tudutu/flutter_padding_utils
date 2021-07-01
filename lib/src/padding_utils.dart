@@ -1,4 +1,5 @@
 library flutter_padding_utils;
+
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
@@ -11,23 +12,17 @@ import 'flush_edges.dart';
 List<EdgeInsets> collapseEdgeInsets(
     Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     {TextDirection textDirection = TextDirection.ltr,
-    PaddingCollapseDistribution distribution}) {
-  assert(axis != null);
-  assert(textDirection != null);
-
+    PaddingCollapseDistribution? distribution}) {
   // Use a default for the distribution.
   distribution =
       distribution ?? PaddingCollapseDistribution.fromFirstFraction(1);
-
-  // Return null if paddings is null
-  if (paddings == null) return null;
 
   // Return an empty list if no elements.
   if (paddings.isEmpty) return [];
 
   // First convert all the EdgeInsetsGeometry items to direction-specific
   // EdgeInsets objects.
-  final edgeInsets = _resolveAll(paddings, textDirection);
+  final edgeInsets = _resolveAll(paddings.toList(), textDirection);
 
   // Convenience variable
   final horizontal = axis == Axis.horizontal;
@@ -70,18 +65,12 @@ List<EdgeInsets> collapseEdgeInsets(
 /// each of the adjoining sizes.
 List<double> collapseToGaps(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     {TextDirection textDirection = TextDirection.ltr}) {
-  assert(axis != null);
-  assert(textDirection != null);
-
-  // Return null if paddings is null
-  if (paddings == null) return null;
-
   // Return an empty list if no elements.
   if (paddings.isEmpty) return [];
 
   // First convert all the EdgeInsetsGeometry items to direction-specific
   // EdgeInsets objects.
-  final edgeInsets = _resolveAll(paddings, textDirection);
+  final edgeInsets = _resolveAll(paddings.toList(), textDirection);
 
   // Convenience variable
   final horizontal = axis == Axis.horizontal;
@@ -92,8 +81,8 @@ List<double> collapseToGaps(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     if (horizontal) edgeInsets[0].left else edgeInsets[0].top
   ];
   for (var i = 1; i < edgeInsets.length; i++) {
-    final p0 = edgeInsets[i - 1] ?? EdgeInsets.zero;
-    final p1 = edgeInsets[i] ?? EdgeInsets.zero;
+    final p0 = edgeInsets[i - 1];
+    final p1 = edgeInsets[i];
 
     // Find the largest of the two adjoining edges as specified by the axis.
     final largest =
@@ -101,7 +90,7 @@ List<double> collapseToGaps(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     result.add(largest);
   }
 
-  final last = edgeInsets[edgeInsets.length - 1] ?? EdgeInsets.zero;
+  final last = edgeInsets[edgeInsets.length - 1];
   result.add(horizontal ? last.right : last.bottom);
 
   return result;
@@ -201,12 +190,6 @@ enum OuterPaddingSize { max, min }
 EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     {TextDirection textDirection = TextDirection.ltr,
     OuterPaddingSize outerPaddingSize = OuterPaddingSize.max}) {
-  assert(axis != null);
-  assert(textDirection != null);
-
-  // Return null if paddings is null
-  if (paddings == null) return null;
-
   // Return EdgeInsets.zero if no elements.
   if (paddings.isEmpty) return EdgeInsets.zero;
 
@@ -215,7 +198,7 @@ EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
 
   // First convert all the EdgeInsetsGeometry items to direction-specific
   // EdgeInsets objects.
-  final edgeInsets = _resolveAll(paddings, textDirection);
+  final edgeInsets = _resolveAll(paddings.toList(), textDirection);
 
   final horizontal = axis == Axis.horizontal;
 
@@ -223,7 +206,7 @@ EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
       ? math.max(x, y)
       : math.min(x, y);
 
-  EdgeInsets result;
+  EdgeInsets? result;
   bool isFirst = true;
   for (var current in edgeInsets) {
     // Copy first one over as-is.
@@ -234,7 +217,7 @@ EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     }
 
     if (horizontal) {
-      result = result.copyWith(
+      result = result!.copyWith(
         // left: Leave the left value as the first one
         top: compare(current.top, result.top),
         bottom: compare(current.bottom, result.bottom),
@@ -242,7 +225,7 @@ EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
         right: current.right,
       );
     } else {
-      result = result.copyWith(
+      result = result!.copyWith(
         // top: Leave the top value as the first one
         left: compare(current.left, result.left),
         right: compare(current.right, result.right),
@@ -252,16 +235,10 @@ EdgeInsets outerPadding(Iterable<EdgeInsetsGeometry> paddings, Axis axis,
     }
   }
 
-  return result;
+  return result!;
 }
 
 EdgeInsets maxEdgeInsets(EdgeInsets a, EdgeInsets b) {
-  if(a == null && b == null)
-    return null;
-  if(a == null && b != null)
-    return b;
-  if(b == null && a != null)
-    return a;
   return EdgeInsets.only(
     left: math.max(a.left, b.left),
     top: math.max(a.top, b.top),
@@ -271,12 +248,6 @@ EdgeInsets maxEdgeInsets(EdgeInsets a, EdgeInsets b) {
 }
 
 EdgeInsets minEdgeInsets(EdgeInsets a, EdgeInsets b) {
-  if(a == null && b == null)
-    return null;
-  if(a == null && b != null)
-    return b;
-  if(b == null && a != null)
-    return a;
   return EdgeInsets.only(
     left: math.min(a.left, b.left),
     top: math.min(a.top, b.top),
@@ -322,7 +293,51 @@ List<EdgeInsets> splitEdgeInsets(EdgeInsets edgeInsets, Axis axis,
   }
 }
 
-EdgeInsetsGeometry onlyEdgeInsetsAlongAxis(EdgeInsetsGeometry edgeInsets, Axis axis,
+/// Splits an EdgeInsets instance into multiple EdgeInsets instances, which when
+/// placed adjacent to each other along the axis specified would be the equivalent
+/// to the initial EdgeInsets instance.
+List<EdgeInsetsDirectional> splitEdgeInsetsDirectional(
+    EdgeInsetsDirectional edgeInsets, Axis axis,
+    {int noOfParts = 2}) {
+  // If noOfParts is 0, return zero parts, i.e. an empty array.
+  if (noOfParts == 0) {
+    return <EdgeInsetsDirectional>[];
+  }
+
+  // If noOfParts is 1, return a copy of the original value unsplit.
+  if (noOfParts == 1) {
+    return [
+      EdgeInsetsDirectional.fromSTEB(
+          edgeInsets.start, edgeInsets.top, edgeInsets.end, edgeInsets.bottom)
+    ];
+  }
+
+  if (axis == Axis.horizontal) {
+    return [
+      EdgeInsetsDirectional.fromSTEB(
+          edgeInsets.start, edgeInsets.top, 0.0, edgeInsets.bottom),
+      for (var i = 1; i < noOfParts - 1; i++)
+        EdgeInsetsDirectional.fromSTEB(
+            0.0, edgeInsets.top, 0.0, edgeInsets.bottom),
+      EdgeInsetsDirectional.fromSTEB(
+          0.0, edgeInsets.top, edgeInsets.end, edgeInsets.bottom),
+    ];
+  } else {
+    // Vertical
+    return [
+      EdgeInsetsDirectional.fromSTEB(
+          edgeInsets.start, edgeInsets.top, edgeInsets.end, 0.0),
+      for (var i = 1; i < noOfParts - 1; i++)
+        EdgeInsetsDirectional.fromSTEB(
+            edgeInsets.start, 0.0, edgeInsets.end, 0.0),
+      EdgeInsetsDirectional.fromSTEB(
+          edgeInsets.start, 0.0, edgeInsets.end, edgeInsets.bottom),
+    ];
+  }
+}
+
+EdgeInsetsGeometry onlyEdgeInsetsAlongAxis(
+    EdgeInsetsGeometry edgeInsets, Axis axis,
     {TextDirection textDirection = TextDirection.ltr}) {
   var resolved = edgeInsets.resolve(textDirection).copyWith();
   if (axis == Axis.vertical) {
@@ -338,13 +353,17 @@ EdgeInsetsGeometry onlyEdgeInsetsAlongAxis(EdgeInsetsGeometry edgeInsets, Axis a
   }
 }
 
-EdgeInsetsGeometry flushEdgeInsets(EdgeInsetsGeometry edgeInsets, FlushEdges flushEdges,
+EdgeInsetsGeometry flushEdgeInsets(
+    EdgeInsetsGeometry edgeInsets, FlushEdges flushEdges,
     {TextDirection textDirection = TextDirection.ltr}) {
-
   final resolved = edgeInsets.resolve(textDirection);
-  final isFlushLeft = textDirection == TextDirection.ltr ? flushEdges.isFlushStart : flushEdges.isFlushEnd;
-  final isFlushRight = textDirection == TextDirection.ltr ? flushEdges.isFlushEnd : flushEdges.isFlushStart;
-  
+  final isFlushLeft = textDirection == TextDirection.ltr
+      ? flushEdges.isFlushStart
+      : flushEdges.isFlushEnd;
+  final isFlushRight = textDirection == TextDirection.ltr
+      ? flushEdges.isFlushEnd
+      : flushEdges.isFlushStart;
+
   final result = resolved.copyWith(
     left: isFlushLeft ? 0 : resolved.left,
     right: isFlushRight ? 0 : resolved.right,
@@ -355,41 +374,47 @@ EdgeInsetsGeometry flushEdgeInsets(EdgeInsetsGeometry edgeInsets, FlushEdges flu
 }
 
 EdgeInsets conditionalZero(bool condition, EdgeInsets edgeInsets) {
-  return condition ?
-    edgeInsets ?? EdgeInsets.zero 
-    : EdgeInsets.zero;
+  return condition ? edgeInsets : EdgeInsets.zero;
 }
 
 extension EdgeInsetsGeometryExtensions on EdgeInsetsGeometry {
   List<EdgeInsets> collapseWith(EdgeInsetsGeometry other, Axis axis,
       {TextDirection textDirection = TextDirection.ltr,
-      PaddingCollapseDistribution distribution}) {
+      PaddingCollapseDistribution? distribution}) {
     return collapseEdgeInsets([this, other], axis,
         textDirection: textDirection, distribution: distribution);
   }
 
-  List<EdgeInsets> split(Axis axis, {int noOfParts = 2}) {
-    return splitEdgeInsets(this, axis, noOfParts: noOfParts);
+  List<EdgeInsetsGeometry> split(Axis axis, {int noOfParts = 2}) {
+    if (this is EdgeInsets) {
+      EdgeInsets e = this as EdgeInsets;
+      return splitEdgeInsets(e, axis, noOfParts: noOfParts);
+    } else if (this is EdgeInsetsDirectional) {
+      EdgeInsetsDirectional e = this as EdgeInsetsDirectional;
+      return splitEdgeInsetsDirectional(e, axis, noOfParts: noOfParts);
+    } else {
+      return [];
+    }
   }
-  
+
   EdgeInsetsGeometry flush(FlushEdges flushEdges,
-    {TextDirection textDirection = TextDirection.ltr}) {
+      {TextDirection textDirection = TextDirection.ltr}) {
     return flushEdgeInsets(this, flushEdges, textDirection: textDirection);
   }
 
   EdgeInsetsGeometry onlyAlongAxis(Axis axis,
-    {TextDirection textDirection = TextDirection.ltr}) {
+      {TextDirection textDirection = TextDirection.ltr}) {
     return onlyEdgeInsetsAlongAxis(this, axis, textDirection: textDirection);
   }
 
   EdgeInsetsGeometry flip(Axis axis) {
     if (this is EdgeInsets) {
-      EdgeInsets e = this;
+      EdgeInsets e = this as EdgeInsets;
       return axis == Axis.horizontal
           ? e.copyWith(left: e.right, right: e.left)
           : e.copyWith(top: e.bottom, bottom: e.top);
     } else if (this is EdgeInsetsDirectional) {
-      EdgeInsetsDirectional e = this;
+      EdgeInsetsDirectional e = this as EdgeInsetsDirectional;
       return axis == Axis.horizontal
           ? EdgeInsetsDirectional.only(
               start: e.end,
@@ -409,6 +434,7 @@ extension EdgeInsetsGeometryExtensions on EdgeInsetsGeometry {
   }
 }
 
-List<EdgeInsets> _resolveAll(List<EdgeInsetsGeometry> edgeInsets, TextDirection textDirection) {
-  return edgeInsets.map((p) => p != null ? p.resolve(textDirection) : null).toList();
-} 
+List<EdgeInsets> _resolveAll(
+    List<EdgeInsetsGeometry> edgeInsets, TextDirection textDirection) {
+  return edgeInsets.map((p) => p.resolve(textDirection)).toList();
+}

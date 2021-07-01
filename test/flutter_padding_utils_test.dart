@@ -4,11 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('collapseEdgeInsets', () {
-    test('returns a null list as null.', () {
-      final result = collapseEdgeInsets(null, Axis.horizontal);
-      expect(result, isNull);
-    });
-
     test('returns a empty list unchanged.', () {
       final paddings = <EdgeInsetsGeometry>[];
       final result = collapseEdgeInsets(paddings, Axis.horizontal);
@@ -147,11 +142,6 @@ void main() {
   });
 
   group('collapseToGaps', () {
-    test('returns a null list as null.', () {
-      final result = collapseToGaps(null, Axis.horizontal);
-      expect(result, isNull);
-    });
-
     test('returns a empty list unchanged.', () {
       final paddings = <EdgeInsetsGeometry>[];
       final result = collapseToGaps(paddings, Axis.horizontal);
@@ -203,24 +193,9 @@ void main() {
       final result = collapseToGaps(paddings, Axis.vertical);
       expect(result, equals([0.0, 10.0, 15.0, 10.0]));
     });
-    
-    test('null values are considered as 0 size', () {
-      final paddings = [
-        EdgeInsets.only(bottom: 6),
-        null,
-        EdgeInsets.only(top: 15, bottom: 10),
-      ];
-      final result = collapseToGaps(paddings, Axis.vertical);
-      expect(result, equals([0.0, 10.0, 15.0, 10.0]));
-    });
   });
 
   group('outerPadding', () {
-    test('returns null if input is null.', () {
-      final result = outerPadding(null, Axis.horizontal);
-      expect(result, isNull);
-    });
-
     test('returns EdgeInsets.zero if list is empty.', () {
       final paddings = <EdgeInsetsGeometry>[];
       final result = outerPadding(paddings, Axis.horizontal);
@@ -323,11 +298,6 @@ void main() {
               EdgeInsets.symmetric(vertical: 10)),
           equals(EdgeInsets.all(10)));
     });
-    test('returns nulls correctly', () {
-      expect(maxEdgeInsets(null, null), equals(null));
-      expect(maxEdgeInsets(null, EdgeInsets.zero), equals(EdgeInsets.zero));
-      expect(maxEdgeInsets(EdgeInsets.zero, null), equals(EdgeInsets.zero));
-    });
   });
 
   group('minEdgeInsets', () {
@@ -338,11 +308,6 @@ void main() {
           minEdgeInsets(EdgeInsets.symmetric(horizontal: 10),
               EdgeInsets.symmetric(vertical: 10)),
           equals(EdgeInsets.zero));
-    });
-    test('returns nulls correctly', () {
-      expect(minEdgeInsets(null, null), equals(null));
-      expect(minEdgeInsets(null, EdgeInsets.zero), equals(EdgeInsets.zero));
-      expect(minEdgeInsets(EdgeInsets.zero, null), equals(EdgeInsets.zero));
     });
   });
 
@@ -407,8 +372,7 @@ void main() {
     group('flushes edges using FlushEdges', () {
       test('all', () {
         final edgeInsets = EdgeInsets.all(10);
-        expect(edgeInsets.flush(FlushEdges.all),
-            equals(EdgeInsets.all(0)));
+        expect(edgeInsets.flush(FlushEdges.all), equals(EdgeInsets.all(0)));
       });
       test('bottom', () {
         final edgeInsets = EdgeInsets.all(10);
@@ -442,8 +406,7 @@ void main() {
       });
       test('none', () {
         final edgeInsets = EdgeInsets.all(10);
-        expect(edgeInsets.flush(FlushEdges.none),
-            equals(EdgeInsets.all(10)));
+        expect(edgeInsets.flush(FlushEdges.none), equals(EdgeInsets.all(10)));
       });
       test('start', () {
         final edgeInsets = EdgeInsets.all(10);
@@ -490,13 +453,14 @@ void main() {
 
   group('conditionalZero', () {
     test('returns EdgeInsets.zero if conditional is false', () {
-      expect(conditionalZero(false, EdgeInsets.all(10)), equals(EdgeInsets.zero));
+      expect(
+          conditionalZero(false, EdgeInsets.all(10)), equals(EdgeInsets.zero));
     });
-    test('returns edgeInsets parameter if conditional is true and edgeInsets is not null', () {
-      expect(conditionalZero(true, EdgeInsets.all(10)), equals(EdgeInsets.all(10)));
-    });
-    test('returns EdgeInsets.zero if conditional is true and edgeInsets is null', () {
-      expect(conditionalZero(true, null), equals(EdgeInsets.zero));
+    test(
+        'returns edgeInsets parameter if conditional is true and edgeInsets is not null',
+        () {
+      expect(conditionalZero(true, EdgeInsets.all(10)),
+          equals(EdgeInsets.all(10)));
     });
   });
 }
